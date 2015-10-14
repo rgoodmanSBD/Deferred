@@ -19,7 +19,7 @@ public protocol Cancellable {
 
 extension NSURLSessionTask: Cancellable {}
 
-public final class Task<T, Error: ErrorType> {
+public final class Task<T, Error: ErrorType>: FutureType {
     private let deferred: Deferred<Result<T, Error>>
     public var task: Cancellable?
 
@@ -36,16 +36,39 @@ public final class Task<T, Error: ErrorType> {
         self.deferred = Deferred(value: value)
     }
 
+    /// Check whether or not the receiver is filled.
+    public var isFilled: Bool {
+        return deferred.isFilled
+    }
+
+    /// Call some function once the value is determined.
+    ///
+    /// If the value is determined, the function should be submitted to the
+    /// queue immediately. An `upon` call should always execute asynchronously.
+    ///
+    /// - parameter queue: A dispatch queue for executing the given function on.
+    /// - parameter function: A function that uses the determined value.
+    public func upon(queue: dispatch_queue_t, function: Result<T, Error> -> ()) {
+        return deferred.upon(queue, function: function)
+    }
+
+    /// Waits synchronously for the value to become determined.
+    ///
+    /// If the value is already determined, the call returns immediately with the
+    /// value.
+    ///
+    /// - parameter time: A length of time to wait for the value to be determined.
+    /// - returns: The determined value, if filled within the timeout, or `nil`.
+    public func wait(time: Timeout) -> Result<T, Error>? {
+        return deferred.wait(time)
+    }
+
     public func fill(result: Result<T, Error>) {
         deferred.fill(result)
     }
 
     public func fillIfUnfilled(result: Result<T, Error>) {
         deferred.fill(result, assertIfFilled: false)
-    }
-
-    public var isFilled: Bool {
-        return deferred.isFilled
     }
 
     public func ignoringResult() -> Task<Void, Error> {
@@ -111,18 +134,6 @@ public final class Task<T, Error: ErrorType> {
                 return Deferred(value: .Failure(error))
             }
         }
-    }
-
-    public func uponQueue(queue: dispatch_queue_t, block: Result<T, Error> -> Void) {
-        deferred.upon(queue, function: block)
-    }
-
-    public func upon(function: Result<T, Error> -> Void) {
-        deferred.upon(function)
-    }
-
-    public func uponMainQueue(block: Result<T, Error> -> Void) {
-        uponQueue(dispatch_get_main_queue(), block: block)
     }
 
     /// Attempt to cancel the underlying task. This is a "best effort"; there are several
