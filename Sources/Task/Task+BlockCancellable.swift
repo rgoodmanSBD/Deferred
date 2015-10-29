@@ -14,12 +14,11 @@ import Dispatch
 
 extension Task {
 
-    public init(queue: dispatch_queue_t, flags: dispatch_block_flags_t, function: () -> Result<T, Error>, @autoclosure(escaping) produceError: () -> Error) {
+    public init(upon queue: dispatch_queue_t, flags: dispatch_block_flags_t = dispatch_block_flags_t(rawValue: 0), @autoclosure(escaping) onCancel produceError: () -> Error, body: () -> Result<T, Error>) {
         let deferred = Deferred<Result<T, Error>>()
 
         let block = dispatch_block_create(flags) {
-            let result = function()
-            _ = try? deferred.fill(result)
+            deferred.fill(body())
         }
 
         defer {
@@ -29,7 +28,7 @@ extension Task {
         dispatch_block_notify(block, queue) {
             guard dispatch_block_testcancel(block) != 0 else { return }
             let error = produceError()
-            _ = try? deferred.fill(.Failure(error))
+            deferred.fill(.Failure(error))
         }
 
         self.init(deferred) {
