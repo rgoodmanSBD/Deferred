@@ -75,32 +75,3 @@ public struct Task<T, Error: ErrorType>: FutureType {
         cancellation()
     }
 }
-
-func all<T, Error, Seq: SequenceType where Seq.Generator.Element == Task<T, Error>>(sequence: Seq) -> Task<Void, Error> {
-    let incomingTasks = Array(sequence)
-
-    if incomingTasks.isEmpty {
-        return Task(value: .Success())
-    }
-
-    let completedTaskCount = LockProtected(item: 0)
-    let coalescingTask = Task<Void, Error>()
-
-    for task in incomingTasks {
-        task.upon { result in
-            // fast-track an error if we get one
-            if let error = result.error {
-                coalescingTask.fillIfUnfilled(.Failure(error))
-                return
-            }
-
-            // if we haven't failed and we're the last task to finish, fill with success
-            let count = completedTaskCount.withWriteLock { (inout c: Int) in ++c }
-            if count == incomingTasks.count {
-                coalescingTask.fillIfUnfilled(.Success())
-            }
-        }
-    }
-
-    return coalescingTask
-}
