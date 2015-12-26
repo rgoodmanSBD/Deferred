@@ -18,10 +18,10 @@ private func noCancellation() { }
 
 public struct Task<T> {
 
-    private let task: Future<Value>
+    private let task: Future<Result<T>>
     private let cancellation: Cancellation
 
-    private init(task: Future<Value>, cancellation: Cancellation) {
+    private init(task: Future<Result<T>>, cancellation: Cancellation) {
         self.task = task
         self.cancellation = cancellation
     }
@@ -43,8 +43,6 @@ extension Task {
 }
 
 extension Task: FutureType {
-
-    public typealias Value = Result<T>
 
     /// Call some function once the value is determined.
     ///
@@ -72,27 +70,18 @@ extension Task: FutureType {
 
 extension Task {
 
-    public init<OtherFuture: FutureType where OtherFuture.Value == Value>(_ future: OtherFuture, cancellation: Cancellation = noCancellation) {
-        self.init(task: Future(future), cancellation: cancellation)
+    public init(task other: Task<T>) {
+        self.init(task: other.task, cancellation: other.cancellation)
     }
 
-    public init(value: Value, cancellation: Cancellation = noCancellation) {
-        self.init(task: Future(value: value), cancellation: cancellation)
-    }
-
-    public init(_ other: Future<Value>, cancellation: Cancellation = noCancellation) {
-        self.init(task: other, cancellation: cancellation)
-    }
-
-    public init(_ other: Task<T>, cancellation: Cancellation = noCancellation) {
-        self.init(task: other.task, cancellation: cancellation)
-    }
-
-    init<Future: FutureType where Future.Value: ResultType, Future.Value.Value == T>(_ other: Future, cancellation: Cancellation = noCancellation) {
-        let mapped = other.map {
+    public init<OtherFuture: FutureType where OtherFuture.Value: ResultType, OtherFuture.Value.Value == T>(_ other: OtherFuture, cancellation: Cancellation = noCancellation) {
+        self.init(task: other.map {
             $0.analysis(ifSuccess: Result.Success, ifFailure: Result.Failure)
-        }
-        self.init(mapped, cancellation: cancellation)
+        }, cancellation: cancellation)
+    }
+
+    public init(value: Result<T>) {
+        self.init(task: Future(value: value), cancellation: { _ in })
     }
 
 }

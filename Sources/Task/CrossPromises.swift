@@ -32,13 +32,8 @@ extension PromiseType where Value: ResultType {
 
     init(@noescape with body: () throws -> Value.Value) {
         self.init()
-        let value: Value
-        do {
-            value = Value(value: try body())
-        } catch {
-            value = Value(error: error)
-        }
-        fill(value)
+        let result = Value(with: body)
+        fill(result)
     }
 
 }
