@@ -20,17 +20,17 @@ import Dispatch
 /// will be filled (with success) once all accumulated tasks have completed.
 /// The success or failure of the accumulated tasks is IGNORED - TaskAccumulator
 /// is only interested in completion.
-public final class TaskAccumulator {
-    private let group = dispatch_group_create()!
-
-    public init() {}
+public struct TaskAccumulator {
+    private let group = dispatch_group_create()
 
     /// Accumulate another task into the list of tasks that fold into `allCompleteTask`.
     ///
     /// This method is thread-safe.
-    public func accumulate<T>(task: Task<T>) {
+    public func accumulate<Task: FutureType where Task.Value: ResultType>(task: Task) {
         dispatch_group_enter(group)
-        task.upon { _ in dispatch_group_leave(self.group) }
+        task.upon { [group = group] _ in
+            dispatch_group_leave(group)
+        }
     }
 
     /// Generate a deferred which will be filled once all tasks given to this instance
@@ -40,11 +40,11 @@ public final class TaskAccumulator {
     /// if this method is being called at the same time as `accumulate` (whether the
     /// task being currently accumulated will be included in this call to allCompleteTask
     /// is racy).
-    public func allCompleteTask() -> Deferred<Void> {
+    public func allCompleteTask() -> Future<Void> {
         let deferred = Deferred<Void>()
         dispatch_group_notify(group, Deferred<Void>.genericQueue) {
-            deferred.fill(())
+            deferred.fill()
         }
-        return deferred
+        return Future(deferred)
     }
 }
