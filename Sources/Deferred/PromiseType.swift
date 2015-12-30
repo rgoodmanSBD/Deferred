@@ -61,4 +61,16 @@ public extension PromiseType {
             assertionFailure("Cannot fill an already-filled \(self.dynamicType)", file: file, line: line)
         }
     }
+
+    init<Other: FutureType where Other.Value == Value>(_ other: Other) {
+        self.init()
+        other.upon {
+            self.fill($0)
+        }
+    }
+
+    init(@noescape with body: () -> Value) {
+        self.init()
+        fill(body())
+    }
 }
