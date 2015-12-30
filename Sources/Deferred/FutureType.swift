@@ -117,20 +117,45 @@ public extension FutureType {
     }
 }
 
+public extension FutureType where Value: FutureType {
+
+    /// A combined view of a future that contains another future.
+    ///
+    /// The returned `Future` is determined with the value of the innermost
+    /// future when both recieving futures are resolved
+    ///
+    /// - parameter queue: Optional dispatch queue for combining the values.
+    ///   Defaults to a global queue matching the current QoS.
+    /// - returns: The new deferred value returned by combining the nested recievers.
+    /// - seealso: flatMap
+    func flatten(upon queue: dispatch_queue_t = Self.genericQueue) -> Future<Value.Value> {
+        let d = Deferred<Value.Value>()
+        upon(queue) {
+            $0.upon(queue) {
+                d.fill($0)
+            }
+        }
+        return Future(d)
+    }
+
+}
+
 public extension FutureType {
     /// Begins another asynchronous operation with the deferred value once it
     /// becomes determined.
     ///
-    /// `flatMap` is similar to `map`, but `transform` returns a `Deferred`
+    /// `flatMap` is similar to `map`, but where `transform` returns a future
     /// instead of an immediate value. Use `flatMap` when you want this future
     /// to feed into another asynchronous operation. You might hear this
     /// referred to as "chaining" or "binding".
+    ///
+    /// Equivalent to `self.map(transform).flatten()`, but more efficient.
     ///
     /// - parameter queue: Optional dispatch queue for starting the new
     ///   operation from. Defaults to a global queue matching the current QoS.
     /// - parameter transform: Start a new operation using the deferred value.
     /// - returns: The new deferred value returned by the `transform`.
-    /// - seealso: Deferred
+    /// - seealso: flatten
     func flatMap<NewFuture: FutureType>(upon queue: dispatch_queue_t = Self.genericQueue, _ transform: Value -> NewFuture) -> Future<NewFuture.Value> {
         let d = Deferred<NewFuture.Value>()
         upon(queue) {
