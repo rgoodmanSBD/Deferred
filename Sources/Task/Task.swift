@@ -74,10 +74,8 @@ extension Task {
         self.init(task: other.task, cancellation: other.cancellation)
     }
 
-    public init<OtherFuture: FutureType where OtherFuture.Value: ResultType, OtherFuture.Value.Value == T>(_ other: OtherFuture, cancellation: Cancellation = noCancellation) {
-        self.init(task: other.map {
-            $0.analysis(ifSuccess: Result.Success, ifFailure: Result.Failure)
-        }, cancellation: cancellation)
+    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == T>(_ other: Other, cancellation: Cancellation = noCancellation) {
+        self.init(task: Future(other), cancellation: cancellation)
     }
 
     public init(value: Result<T>) {

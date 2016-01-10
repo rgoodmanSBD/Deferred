@@ -27,3 +27,13 @@ extension FutureType where Value: ResultType {
     }
 
 }
+
+extension Future where Value: ResultType {
+
+    init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == Value.Value>(_ other: Other) {
+        self = other.map {
+            Value(with: $0.extract)
+        }
+    }
+
+}

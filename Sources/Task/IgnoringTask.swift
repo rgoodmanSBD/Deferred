@@ -69,9 +69,7 @@ extension IgnoringTask {
         self.init(task: other.task, cancellation: other.cancellation)
     }
 
-    public init<OtherFuture: FutureType where OtherFuture.Value: ResultType, OtherFuture.Value.Value == Value>(_ other: OtherFuture, cancellation: Cancellation = noCancellation) {
-        self.init(task: other.map {
-            $0.analysis(ifSuccess: Result.Success, ifFailure: Result.Failure)
-        }, cancellation: cancellation)
+    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == Value>(_ other: Other, cancellation: Cancellation = noCancellation) {
+        self.init(task: Future(other), cancellation: cancellation)
     }
 }
