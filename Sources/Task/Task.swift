@@ -85,3 +85,11 @@ extension Task {
     }
 
 }
+
+extension IgnoringTask {
+
+    public init(_ task: Task<Value>) {
+        self.init(task: task.task, cancellation: task.cancellation)
+    }
+
+}
