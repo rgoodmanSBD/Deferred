@@ -1,5 +1,5 @@
 //
-//  Task+Cancellable.swift
+//  Task+BlockCancellable.swift
 //  Deferred
 //
 //  Created by Zachary Waldowski on 7/14/15.
@@ -14,11 +14,11 @@ import Dispatch
 
 extension Task {
 
-    public init(upon queue: dispatch_queue_t, flags: dispatch_block_flags_t = dispatch_block_flags_t(rawValue: 0), @autoclosure(escaping) onCancel produceError: () -> ErrorType, body: () -> Result<T>) {
+    public init(upon queue: dispatch_queue_t, flags: dispatch_block_flags_t = dispatch_block_flags_t(0), @autoclosure(escaping) onCancel produceError: () -> ErrorType, body: () throws -> T) {
         let deferred = Deferred<Result<T>>()
 
         let block = dispatch_block_create(flags) {
-            deferred.fill(body())
+            deferred.fill(Result(with: body))
         }
 
         defer {

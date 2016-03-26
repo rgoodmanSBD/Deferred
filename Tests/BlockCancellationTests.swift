@@ -39,10 +39,10 @@ class BlockCancellationTests: XCTestCase {
         let startSemaphore = dispatch_semaphore_create(0)
         let finishSemaphore = dispatch_semaphore_create(0)
 
-        let task = Task(upon: queue, onCancel: Error.First) { () -> Result<Int> in
+        let task = Task<Int>(upon: queue, onCancel: Error.First) {
             dispatch_semaphore_signal(startSemaphore)
             dispatch_semaphore_wait(finishSemaphore, oneSecondTimeout)
-            return .Success(1)
+            return 1
         }
 
         dispatch_semaphore_wait(startSemaphore, oneSecondTimeout)
@@ -61,9 +61,7 @@ class BlockCancellationTests: XCTestCase {
             dispatch_semaphore_wait(semaphore, oneSecondTimeout)
         }
 
-        let task = Task(upon: queue, onCancel: Error.Second) { () -> Result<Int> in
-            .Success(1)
-        }
+        let task = Task<Int>(upon: queue, onCancel: Error.Second) { 1 }
 
         task.cancel()
         dispatch_semaphore_signal(semaphore)
