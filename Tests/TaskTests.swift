@@ -15,8 +15,10 @@ import Deferred
 @testable import Deferred
 #endif
 
-func mockCancellation(expectation: XCTestExpectation?)() -> Void {
-    expectation?.fulfill()
+func mockCancellation(expectation: XCTestExpectation?) -> () -> Void {
+    return {
+        expectation?.fulfill()
+    }
 }
 
 class CancellableTaskTests: XCTestCase {

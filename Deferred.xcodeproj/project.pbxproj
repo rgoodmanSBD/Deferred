@@ -123,9 +123,6 @@
 		DB9976E11C2F4160005201CE /* TaskAccumulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DB1C2F4160005201CE /* TaskAccumulatorTests.swift */; };
 		DB9976E21C2F4160005201CE /* TaskAccumulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DB1C2F4160005201CE /* TaskAccumulatorTests.swift */; };
 		DB9976E31C2F4160005201CE /* TaskAccumulatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DB1C2F4160005201CE /* TaskAccumulatorTests.swift */; };
-		DB9976E41C2F4160005201CE /* TaskForTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DC1C2F4160005201CE /* TaskForTests.swift */; };
-		DB9976E51C2F4160005201CE /* TaskForTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DC1C2F4160005201CE /* TaskForTests.swift */; };
-		DB9976E61C2F4160005201CE /* TaskForTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DC1C2F4160005201CE /* TaskForTests.swift */; };
 		DB9976E71C2F4160005201CE /* TaskTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DD1C2F4160005201CE /* TaskTests.swift */; };
 		DB9976E81C2F4160005201CE /* TaskTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DD1C2F4160005201CE /* TaskTests.swift */; };
 		DB9976E91C2F4160005201CE /* TaskTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9976DD1C2F4160005201CE /* TaskTests.swift */; };
@@ -201,7 +198,6 @@
 		DB9976C11C2F4147005201CE /* TaskCollections.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskCollections.swift; sourceTree = "<group>"; };
 		DB9976DA1C2F4160005201CE /* BlockCancellationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BlockCancellationTests.swift; sourceTree = "<group>"; };
 		DB9976DB1C2F4160005201CE /* TaskAccumulatorTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskAccumulatorTests.swift; sourceTree = "<group>"; };
-		DB9976DC1C2F4160005201CE /* TaskForTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskForTests.swift; sourceTree = "<group>"; };
 		DB9976DD1C2F4160005201CE /* TaskTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -319,7 +315,6 @@
 				DB9976A91C2F2E6E005201CE /* ResultRecoveryTests.swift */,
 				DB9976AA1C2F2E6E005201CE /* ResultTests.swift */,
 				DB9976DB1C2F4160005201CE /* TaskAccumulatorTests.swift */,
-				DB9976DC1C2F4160005201CE /* TaskForTests.swift */,
 				DB9976DD1C2F4160005201CE /* TaskTests.swift */,
 				DB9976AB1C2F2E6E005201CE /* VoidResultTests.swift */,
 				DB6ADFE41C237DD500D77BF1 /* Info.plist */,
@@ -670,7 +665,6 @@
 				DB6ADFE31C237DD500D77BF1 /* DeferredTests.swift in Sources */,
 				DB6AE0771C237FB200D77BF1 /* LockProtectedTests.swift in Sources */,
 				DB6AE07A1C237FB200D77BF1 /* ReadWriteLockTests.swift in Sources */,
-				DB9976E51C2F4160005201CE /* TaskForTests.swift in Sources */,
 				DB9976B61C2F2E6E005201CE /* ResultTests.swift in Sources */,
 				DB6AE0711C237FB200D77BF1 /* ExistentialFutureTests.swift in Sources */,
 				DB9976E81C2F4160005201CE /* TaskTests.swift in Sources */,
@@ -716,7 +710,6 @@
 				DB6AE06A1C237FAA00D77BF1 /* DeferredTests.swift in Sources */,
 				DB6AE0761C237FB200D77BF1 /* LockProtectedTests.swift in Sources */,
 				DB6AE0791C237FB200D77BF1 /* ReadWriteLockTests.swift in Sources */,
-				DB9976E41C2F4160005201CE /* TaskForTests.swift in Sources */,
 				DB9976B51C2F2E6E005201CE /* ResultTests.swift in Sources */,
 				DB6AE0701C237FB200D77BF1 /* ExistentialFutureTests.swift in Sources */,
 				DB9976E71C2F4160005201CE /* TaskTests.swift in Sources */,
@@ -762,7 +755,6 @@
 				DB6AE06B1C237FAB00D77BF1 /* DeferredTests.swift in Sources */,
 				DB6AE0781C237FB200D77BF1 /* LockProtectedTests.swift in Sources */,
 				DB6AE07B1C237FB200D77BF1 /* ReadWriteLockTests.swift in Sources */,
-				DB9976E61C2F4160005201CE /* TaskForTests.swift in Sources */,
 				DB9976B71C2F2E6E005201CE /* ResultTests.swift in Sources */,
 				DB6AE0721C237FB200D77BF1 /* ExistentialFutureTests.swift in Sources */,
 				DB9976E91C2F4160005201CE /* TaskTests.swift in Sources */,

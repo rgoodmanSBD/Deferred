@@ -20,7 +20,7 @@ enum Error: ErrorType {
     case Third
 }
 
-func afterDelay(delay: NSTimeInterval, upon queue: dispatch_queue_t = dispatch_get_main_queue(), perform: () -> ()) {
+func after(delay delay: NSTimeInterval, upon queue: dispatch_queue_t = dispatch_get_main_queue(), perform: () -> ()) {
     let delay = dispatch_time(DISPATCH_TIME_NOW, Int64(delay * NSTimeInterval(NSEC_PER_SEC)))
     dispatch_after(delay, queue, perform)
 }

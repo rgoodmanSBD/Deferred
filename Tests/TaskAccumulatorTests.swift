@@ -39,12 +39,12 @@ class TaskAccumulatorTests: XCTestCase {
             tasks.append(task)
             accumulator.accumulate(task)
 
-            afterDelay(0.1, queue: queue) {
+            after(delay: 0.1, upon: queue) {
                 // success/failure should be ignored by TaskAccumulator, so try both!
                 if i % 2 == 0 {
                     deferred.fill(.Success(()))
                 } else {
-                    deferred.fill(.Failure(AnyError.Unit))
+                    deferred.fill(.Failure(Error.First))
                 }
             }
         }
