@@ -24,8 +24,9 @@ class CancellableTaskTests: XCTestCase {
     func testThatFlatMapForwardsCancellationToSubsequentTask() {
         let firstTask = Task<Int, NoError>(value: .Success(1))
         let expectation = expectationWithDescription("flatMapped task is cancelled")
-        let mappedTask = firstTask.flatMap { [weak expectation] _ in
-            Task<Int, NoError>(cancellation: mockCancellation(expectation))
+        let mappedTask = firstTask.flatMap { _ -> Task<Int, NoError> in
+            let d = Deferred<Result<Int, NoError>>()
+            return Task(d, cancellation: mockCancellation(expectation))
         }
         mappedTask.cancel()
         waitForExpectationsWithTimeout(TestTimeout, handler: nil)
@@ -34,8 +35,9 @@ class CancellableTaskTests: XCTestCase {
     func testThatFlatMapSuccessForwardsCancellationToSubsequentTask() {
         let firstTask = Task<Int, NoError>(value: .Success(1))
         let expectation = expectationWithDescription("flatMapped task is cancelled")
-        let mappedTask = firstTask.flatMapSuccess { [weak expectation] _ in
-            Task<Int, NoError>(cancellation: mockCancellation(expectation))
+        let mappedTask = firstTask.flatMapSuccess { _ -> Task<Int, NoError> in
+            let d = Deferred<Result<Int, NoError>>()
+            return Task<Int, NoError>(d, cancellation: mockCancellation(expectation))
         }
         mappedTask.cancel()
         waitForExpectationsWithTimeout(TestTimeout, handler: nil)

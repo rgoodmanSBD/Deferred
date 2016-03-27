@@ -14,7 +14,7 @@ import Dispatch
 
 extension Task {
 
-    public convenience init(queue: dispatch_queue_t, flags: dispatch_block_flags_t, function: () -> Result<T, Error>, @autoclosure(escaping) produceError: () -> Error) {
+    public init(queue: dispatch_queue_t, flags: dispatch_block_flags_t, function: () -> Result<T, Error>, @autoclosure(escaping) produceError: () -> Error) {
         let deferred = Deferred<Result<T, Error>>()
 
         let block = dispatch_block_create(flags) {

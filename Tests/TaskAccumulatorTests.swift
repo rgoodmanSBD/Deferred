@@ -34,16 +34,17 @@ class TaskAccumulatorTests: XCTestCase {
         let numTasks = 20
         var tasks = [Task<Void, AnyError>]()
         for i in 0 ..< numTasks {
-            let task = Task<Void, AnyError>()
+            let deferred = Deferred<Result<Void, AnyError>>()
+            let task = Task<Void, AnyError>(deferred)
             tasks.append(task)
             accumulator.accumulate(task)
 
             afterDelay(0.1, queue: queue) {
                 // success/failure should be ignored by TaskAccumulator, so try both!
                 if i % 2 == 0 {
-                    task.fill(.Success(()))
+                    deferred.fill(.Success(()))
                 } else {
-                    task.fill(.Failure(.Unit))
+                    deferred.fill(.Failure(.Unit))
                 }
             }
         }
@@ -58,30 +59,5 @@ class TaskAccumulatorTests: XCTestCase {
         }
 
         waitForExpectationsWithTimeout(4, handler: nil)
-    }
-
-    func testThatFinishedTasksAreNotRetained() {
-        weak var retainCheck: Task<Void, NoError>?
-
-        let expectation = expectationWithDescription("Task in question finished")
-        autoreleasepool {
-            let task = Task<Void, NoError>()
-            retainCheck = task
-            accumulator.accumulate(task)
-
-            afterDelay(0.1, queue: queue) {
-                try! task.fill(.Success(()))
-
-                // Postpone fulfilling the expectation by 1 runloop tick so we're
-                // sure task will be deallocated (assumine no one else is retaining it)
-                dispatch_async(self.queue) { [weak expectation] in
-                    expectation?.fulfill()
-                }
-            }
-        }
-
-        XCTAssertNotNil(retainCheck)
-        waitForExpectationsWithTimeout(15, handler: nil)
-        XCTAssertNil(retainCheck)
     }
 }
