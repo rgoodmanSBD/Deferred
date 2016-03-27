@@ -14,8 +14,6 @@ import Dispatch
 
 public typealias Cancellation = () -> Void
 
-private func noCancellation() { }
-
 public struct Task<T> {
 
     private let task: Future<Result<T>>
@@ -74,7 +72,7 @@ extension Task {
         self.init(task: other.task, cancellation: other.cancellation)
     }
 
-    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == T>(_ other: Other, cancellation: Cancellation = noCancellation) {
+    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == T>(_ other: Other, cancellation: Cancellation) {
         self.init(task: Future(other), cancellation: cancellation)
     }
 

@@ -35,7 +35,7 @@ class TaskAccumulatorTests: XCTestCase {
         var tasks = [Task<Void>]()
         for i in 0 ..< numTasks {
             let deferred = Deferred<Result<Void>>()
-            let task = Task<Void>(deferred)
+            let task = Task<Void>(deferred, cancellation: { _ in })
             tasks.append(task)
             accumulator.accumulate(task)
 

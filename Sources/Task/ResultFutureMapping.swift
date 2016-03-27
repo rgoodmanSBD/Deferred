@@ -34,12 +34,12 @@ extension FutureType where Value: ResultType {
 
     public func map<NewValue>(upon queue: dispatch_queue_t = Self.genericQueue, _ body: OldValue throws -> NewValue) -> Task<NewValue> {
         let mapped = mapImpl(upon: queue, body)
-        return Task(mapped)
+        return Task(mapped, cancellation: { _ in })
     }
 
     public func recover(upon queue: dispatch_queue_t = Self.genericQueue, _ body: ErrorType throws -> OldValue) -> Task<OldValue> {
         let mapped = recoverImpl(upon: queue, body)
-        return Task(mapped)
+        return Task(mapped, cancellation: { _ in })
     }
 
     public func flatMap<NewValue>(upon queue: dispatch_queue_t = Self.genericQueue, _ body: OldValue throws -> Task<NewValue>) -> Task<NewValue> {

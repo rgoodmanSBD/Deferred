@@ -12,8 +12,6 @@ import Result
 #endif
 import Dispatch
 
-private func noCancellation() {}
-
 private extension ResultType {
     var ignored: Result<Void> {
         return analysis(ifSuccess: { _ in .Success() }, ifFailure: Result.Failure)
@@ -69,7 +67,7 @@ extension IgnoringTask {
         self.init(task: other.task, cancellation: other.cancellation)
     }
 
-    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == Value>(_ other: Other, cancellation: Cancellation = noCancellation) {
+    public init<Other: FutureType where Other.Value: ResultType, Other.Value.Value == Value>(_ other: Other, cancellation: Cancellation) {
         self.init(task: Future(other), cancellation: cancellation)
     }
 }

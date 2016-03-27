@@ -36,7 +36,7 @@ public extension CollectionType where Generator.Element: FutureType, Generator.E
             }
         }
 
-        return Task(coalescingDeferred)
+        return Task(coalescingDeferred, cancellation: { _ in })
     }
 
 }
