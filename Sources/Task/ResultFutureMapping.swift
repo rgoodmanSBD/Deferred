@@ -42,16 +42,16 @@ extension FutureType where Value: ResultType {
         return Task(mapped)
     }
 
-    public func flatMap<NewValue>(upon queue: dispatch_queue_t = Self.genericQueue, _ body: OldValue -> Task<NewValue>) -> Task<NewValue> {
+    public func flatMap<NewValue>(upon queue: dispatch_queue_t = Self.genericQueue, _ body: OldValue throws -> Task<NewValue>) -> Task<NewValue> {
         let cancellationToken = Deferred<Void>()
-        let mapped = flatMap(upon: queue) { result -> Future<Result<NewValue>> in
-            result.analysis(ifSuccess: { value in
-                let newTask = body(value)
+        let mapped = flatMap(upon: queue) { (result: Value) -> Task<NewValue> in
+            do {
+                let newTask = try result.flatMap(body)
                 cancellationToken.upon(newTask.cancel)
-                return Future(newTask)
-            }, ifFailure: { error in
-                Future(value: .Failure(error))
-            })
+                return newTask
+            } catch {
+                return Task(value: .Failure(error))
+            }
         }
         return Task(mapped) { _ = cancellationToken.fill() }
     }
@@ -68,6 +68,16 @@ public extension Task {
     public func recover(upon queue: dispatch_queue_t = Task<T>.genericQueue, _ body: ErrorType throws -> T) -> Task<T> {
         let mapped = recoverImpl(upon: queue, body)
         return Task(mapped, cancellation: cancel)
+    }
+
+}
+
+extension ResultType {
+
+    public func flatMap<NewValue>(@noescape body: Value throws -> Task<NewValue>) rethrows -> Task<NewValue> {
+        return try analysis(ifSuccess: body, ifFailure: { error in
+            Task(value: .Failure(error))
+        })
     }
 
 }
