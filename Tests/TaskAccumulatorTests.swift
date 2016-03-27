@@ -51,7 +51,7 @@ class TaskAccumulatorTests: XCTestCase {
         let expectation = expectationWithDescription("allCompleteTask finished")
         accumulator.allCompleteTask().upon(queue) { [weak expectation] _ in
             for task in tasks {
-                XCTAssertTrue(task.isFilled)
+                XCTAssertNotNil(task.wait(.Forever))
             }
 
             expectation?.fulfill()
@@ -69,8 +69,8 @@ class TaskAccumulatorTests: XCTestCase {
             retainCheck = task
             accumulator.accumulate(task)
 
-            afterDelay(0.1, queue: queue) { [weak expectation] in
-                task.fill(.Success(()))
+            afterDelay(0.1, queue: queue) {
+                try! task.fill(.Success(()))
 
                 // Postpone fulfilling the expectation by 1 runloop tick so we're
                 // sure task will be deallocated (assumine no one else is retaining it)

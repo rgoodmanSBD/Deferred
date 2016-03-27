@@ -12,26 +12,29 @@ import Result
 #endif
 import Dispatch
 
-extension DispatchBlock: Cancellable { }
-
 extension Task {
 
     public convenience init(queue: dispatch_queue_t, flags: dispatch_block_flags_t, function: () -> Result<T, Error>, @autoclosure(escaping) produceError: () -> Error) {
-        self.init()
+        let deferred = Deferred<Result<T, Error>>()
 
-        let block = DispatchBlock(flags: flags) {
+        let block = dispatch_block_create(flags) {
             let result = function()
-            self.fillIfUnfilled(result)
+            _ = try? deferred.fill(result)
         }
 
-        block.upon(queue, flags: []) { [unowned self] in
+        defer {
+            dispatch_async(queue, block)
+        }
+
+        dispatch_block_notify(block, queue) {
+            guard dispatch_block_testcancel(block) != 0 else { return }
             let error = produceError()
-            self.fillIfUnfilled(.Failure(error))
+            _ = try? deferred.fill(.Failure(error))
         }
 
-        task = block
-
-        block.callUponQueue(queue)
+        self.init(deferred) {
+            dispatch_block_cancel(block)
+        }
     }
 
 }

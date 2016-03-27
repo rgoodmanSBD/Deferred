@@ -6,34 +6,39 @@
 //  Copyright © 2014-2015 Big Nerd Ranch. Licensed under MIT.
 //
 
-import Foundation
 #if SWIFT_PACKAGE
 import Deferred
 import Result
 #endif
 import Dispatch
 
-public protocol Cancellable {
-    func cancel()
-}
+public typealias Cancellation = () -> Void
 
-extension NSURLSessionTask: Cancellable {}
+public func NoCancellation() { }
+
+private extension PromiseType where Value == Void {
+
+    func fill() {
+        _ = try? self.fill(())
+    }
+
+}
 
 public final class Task<T, Error: ErrorType>: FutureType {
     private let deferred: Deferred<Result<T, Error>>
-    public var task: Cancellable?
+    private let cancellation: Cancellation
 
-    private init(deferred: Deferred<Result<T, Error>>, task: Cancellable?) {
+    internal init(deferred: Deferred<Result<T, Error>>, cancellation: Cancellation) {
         self.deferred = deferred
-        self.task = task
+        self.cancellation = cancellation
     }
 
-    public init() {
-        self.deferred = Deferred()
+    public convenience init(cancellation: Cancellation = NoCancellation) {
+        self.init(deferred: Deferred(), cancellation: cancellation)
     }
 
-    public init(value: Result<T, Error>) {
-        self.deferred = Deferred(value: value)
+    public convenience init(value: Result<T, Error>, cancellation: Cancellation = NoCancellation) {
+        self.init(deferred: Deferred(value: value), cancellation: cancellation)
     }
 
     /// Check whether or not the receiver is filled.
@@ -48,8 +53,8 @@ public final class Task<T, Error: ErrorType>: FutureType {
     ///
     /// - parameter queue: A dispatch queue for executing the given function on.
     /// - parameter function: A function that uses the determined value.
-    public func upon(queue: dispatch_queue_t, function: Result<T, Error> -> ()) {
-        return deferred.upon(queue, function: function)
+    public func upon(queue: dispatch_queue_t, body: Result<T, Error> -> Void) {
+        deferred.upon(queue, body: body)
     }
 
     /// Waits synchronously for the value to become determined.
@@ -63,14 +68,6 @@ public final class Task<T, Error: ErrorType>: FutureType {
         return deferred.wait(time)
     }
 
-    public func fill(result: Result<T, Error>) {
-        deferred.fill(result)
-    }
-
-    public func fillIfUnfilled(result: Result<T, Error>) {
-        deferred.fill(result, assertIfFilled: false)
-    }
-
     public func ignoringResult() -> Task<Void, Error> {
         return self.mapSuccess { _ in }
     }
@@ -80,59 +77,46 @@ public final class Task<T, Error: ErrorType>: FutureType {
     }
 
     public func flatMap<U>(block: Result<T, Error> -> Task<U, Error>) -> Task<U, Error> {
-        let cancelForwarder = CancelForwarder(task)
+        let cancellationToken = Deferred<Void>()
         let mappedDeferred = deferred.flatMap { result -> Deferred<Result<U, Error>> in
             let newTask = block(result)
-            cancelForwarder.task = newTask.task
+            cancellationToken.upon(newTask.cancellation)
             return newTask.deferred
         }
-        return Task<U, Error>(deferred: mappedDeferred, task: cancelForwarder)
+        return Task<U, Error>(deferred: mappedDeferred, cancellation: cancellationToken.fill)
     }
 
     public func map<U>(block: Result<T, Error> -> Result<U, Error>) -> Task<U, Error> {
         let mappedDeferred = deferred.map(transform: block)
-        return Task<U, Error>(deferred: mappedDeferred, task: task)
+        return Task<U, Error>(deferred: mappedDeferred, cancellation: cancellation)
     }
 
     public func mapSuccess<U>(block: T -> U) -> Task<U, Error> {
-        let mappedDeferred = deferred.map { result -> Result<U, Error> in
-            switch result {
-            case .Success(let value):
-                return .Success(block(value))
-            case .Failure(let error):
-                return .Failure(error)
-            }
+        let mappedDeferred = deferred.map { result in
+            result.analysis(ifSuccess: { .Success(block($0)) }, ifFailure: Result.Failure)
         }
-        return Task<U, Error>(deferred: mappedDeferred, task: task)
+        return Task<U, Error>(deferred: mappedDeferred, cancellation: cancellation)
     }
 
     public func flatMapSuccess<U>(block: T -> Result<U, Error>) -> Task<U, Error> {
         let mappedDeferred = deferred.map { $0.flatMap(block) }
-        return Task<U, Error>(deferred: mappedDeferred, task: task)
+        return Task<U, Error>(deferred: mappedDeferred, cancellation: cancellation)
     }
 
-    public func flatMapSuccess<U>(body: T -> Task<U, Error>) -> Task<U, Error> {
-        let cancelForwarder = CancelForwarder(task)
-        let mappedDeferred = deferred.flatMap(transform: flatMapSuccessBindOperation(cancelForwarder, body))
-        return Task<U, Error>(deferred: mappedDeferred, task: cancelForwarder)
+    public func flatMapSuccess<U>(upon queue: dispatch_queue_t = Self.genericQueue, body: T -> Task<U, Error>) -> Task<U, Error> {
+        let cancellationToken = Deferred<Void>()
+        let mappedDeferred = deferred.flatMap(transform: flatMapSuccessBindOperation(cancellationToken, body))
+        return Task<U, Error>(deferred: mappedDeferred, cancellation: cancellationToken.fill)
     }
 
-    public func flatMapSuccess<U>(queue: dispatch_queue_t, body: T -> Task<U, Error>) -> Task<U, Error> {
-        let cancelForwarder = CancelForwarder(task)
-        let mappedDeferred = deferred.flatMap(upon: queue, transform: flatMapSuccessBindOperation(cancelForwarder, body))
-        return Task<U, Error>(deferred: mappedDeferred, task: cancelForwarder)
-    }
-
-    private func flatMapSuccessBindOperation<U>(cancelForwarder: CancelForwarder, _ body: T -> Task<U, Error>) -> Result<T, Error> -> Deferred<Result<U, Error>> {
-        return { result -> Deferred<Result<U, Error>> in
-            switch result {
-            case .Success(let value):
-                let newTask = body(value)
-                cancelForwarder.task = newTask.task
-                return newTask.deferred
-            case .Failure(let error):
-                return Deferred(value: .Failure(error))
-            }
+    private func flatMapSuccessBindOperation<U>(cancel: Deferred<Void>, _ body: T -> Task<U, Error>)(result: Result<T, Error>) -> Deferred<Result<U, Error>> {
+        switch result {
+        case .Success(let value):
+            let newTask = body(value)
+            cancel.upon(newTask.cancellation)
+            return newTask.deferred
+        case .Failure(let error):
+            return Deferred(value: .Failure(error))
         }
     }
 
@@ -143,36 +127,7 @@ public final class Task<T, Error: ErrorType>: FutureType {
     /// * The underlying task has entered an uncancelable state.
     /// * The underlying task is not cancelable.
     public func cancel() {
-        task?.cancel()
-    }
-}
-
-private class CancelForwarder: Cancellable {
-    var state: LockProtected<(task: Cancellable?, isCancelled: Bool)>
-
-    init(_ task: Cancellable?) {
-        state = LockProtected(item: (task: task, isCancelled: false))
-    }
-
-    private func cancel() {
-        state.withWriteLock { state -> Void in
-            state.task?.cancel()
-            state.isCancelled = true
-        }
-    }
-
-    var task: Cancellable? {
-        get {
-            return state.withReadLock { $0.task }
-        }
-        set {
-            state.withWriteLock { state -> Void in
-                state.task = newValue
-                if state.isCancelled {
-                    state.task?.cancel()
-                }
-            }
-        }
+        cancellation()
     }
 }
 
