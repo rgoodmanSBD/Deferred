@@ -29,9 +29,9 @@ func afterDelay(delay: NSTimeInterval, queue: dispatch_queue_t = dispatch_get_ma
 
 extension XCTestCase {
 
-    func waitForTaskToComplete<T, Error: ErrorType>(task: Task<T, Error>) -> Result<T, Error>! {
+    func waitForTaskToComplete<T>(task: Task<T>) -> Result<T>! {
         let expectation = expectationWithDescription("task completed")
-        var result: Result<T, Error>?
+        var result: Result<T>?
         task.uponMainQueue { [weak expectation] in
             result = $0
             expectation?.fulfill()

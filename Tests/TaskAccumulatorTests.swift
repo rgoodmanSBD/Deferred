@@ -32,10 +32,10 @@ class TaskAccumulatorTests: XCTestCase {
 
     func testThatAllCompleteTaskWaitsForAllAccumulatedTasks() {
         let numTasks = 20
-        var tasks = [Task<Void, AnyError>]()
+        var tasks = [Task<Void>]()
         for i in 0 ..< numTasks {
-            let deferred = Deferred<Result<Void, AnyError>>()
-            let task = Task<Void, AnyError>(deferred)
+            let deferred = Deferred<Result<Void>>()
+            let task = Task<Void>(deferred)
             tasks.append(task)
             accumulator.accumulate(task)
 
@@ -44,7 +44,7 @@ class TaskAccumulatorTests: XCTestCase {
                 if i % 2 == 0 {
                     deferred.fill(.Success(()))
                 } else {
-                    deferred.fill(.Failure(.Unit))
+                    deferred.fill(.Failure(AnyError.Unit))
                 }
             }
         }

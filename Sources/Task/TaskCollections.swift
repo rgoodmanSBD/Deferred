@@ -14,16 +14,14 @@ import Darwin
 
 public extension CollectionType where Generator.Element: FutureType, Generator.Element.Value: ResultType {
 
-    typealias Error = Generator.Element.Value.Error
-
-    var allTasks: Task<Void, Error> {
+    var allTasks: Task<Void> {
         if isEmpty {
             return Task(value: .Success())
         }
 
         let incomingTasks = Array(self)
         var completedTaskCount: Int64 = 0
-        let coalescingDeferred = Deferred<Result<Void, Error>>()
+        let coalescingDeferred = Deferred<Result<Void>>()
 
         for task in incomingTasks {
             task.upon { result in

@@ -28,7 +28,7 @@ public final class TaskAccumulator {
     /// Accumulate another task into the list of tasks that fold into `allCompleteTask`.
     ///
     /// This method is thread-safe.
-    public func accumulate<T, Error: ErrorType>(task: Task<T, Error>) {
+    public func accumulate<T>(task: Task<T>) {
         dispatch_group_enter(group)
         task.upon { _ in dispatch_group_leave(self.group) }
     }

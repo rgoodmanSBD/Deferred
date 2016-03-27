@@ -14,8 +14,8 @@ import Dispatch
 
 extension Task {
 
-    public init(upon queue: dispatch_queue_t, flags: dispatch_block_flags_t = dispatch_block_flags_t(rawValue: 0), @autoclosure(escaping) onCancel produceError: () -> Error, body: () -> Result<T, Error>) {
-        let deferred = Deferred<Result<T, Error>>()
+    public init(upon queue: dispatch_queue_t, flags: dispatch_block_flags_t = dispatch_block_flags_t(rawValue: 0), @autoclosure(escaping) onCancel produceError: () -> ErrorType, body: () -> Result<T>) {
+        let deferred = Deferred<Result<T>>()
 
         let block = dispatch_block_create(flags) {
             deferred.fill(body())

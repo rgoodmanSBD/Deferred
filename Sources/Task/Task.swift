@@ -16,7 +16,7 @@ public typealias Cancellation = () -> Void
 
 private func noCancellation() { }
 
-public struct Task<T, Error: ErrorType> {
+public struct Task<T> {
 
     private let task: Future<Value>
     private let cancellation: Cancellation
@@ -44,7 +44,7 @@ extension Task {
 
 extension Task: FutureType {
 
-    public typealias Value = Result<T, Error>
+    public typealias Value = Result<T>
 
     /// Call some function once the value is determined.
     ///
@@ -53,7 +53,7 @@ extension Task: FutureType {
     ///
     /// - parameter queue: A dispatch queue for executing the given function on.
     /// - parameter function: A function that uses the determined value.
-    public func upon(queue: dispatch_queue_t, body: Result<T, Error> -> Void) {
+    public func upon(queue: dispatch_queue_t, body: Result<T> -> Void) {
         task.upon(queue, body: body)
     }
 
@@ -64,7 +64,7 @@ extension Task: FutureType {
     ///
     /// - parameter time: A length of time to wait for the value to be determined.
     /// - returns: The determined value, if filled within the timeout, or `nil`.
-    public func wait(time: Timeout) -> Result<T, Error>? {
+    public func wait(time: Timeout) -> Result<T>? {
         return task.wait(time)
     }
 
@@ -84,11 +84,11 @@ extension Task {
         self.init(task: other, cancellation: cancellation)
     }
 
-    public init(_ other: Task<T, Error>, cancellation: Cancellation = noCancellation) {
+    public init(_ other: Task<T>, cancellation: Cancellation = noCancellation) {
         self.init(task: other.task, cancellation: cancellation)
     }
 
-    init<Future: FutureType where Future.Value: ResultType, Future.Value.Value == T, Future.Value.Error == Error>(_ other: Future, cancellation: Cancellation = noCancellation) {
+    init<Future: FutureType where Future.Value: ResultType, Future.Value.Value == T>(_ other: Future, cancellation: Cancellation = noCancellation) {
         let mapped = other.map {
             $0.analysis(ifSuccess: Result.Success, ifFailure: Result.Failure)
         }

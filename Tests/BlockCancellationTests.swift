@@ -39,7 +39,7 @@ class BlockCancellationTests: XCTestCase {
         let startSemaphore = dispatch_semaphore_create(0)
         let finishSemaphore = dispatch_semaphore_create(0)
 
-        let task = Task(upon: queue, onCancel: .Unit) { () -> Result<Int, AnyError> in
+        let task = Task(upon: queue, onCancel: AnyError.Unit) { () -> Result<Int> in
             dispatch_semaphore_signal(startSemaphore)
             dispatch_semaphore_wait(finishSemaphore, oneSecondTimeout)
             return .Success(1)
@@ -50,7 +50,7 @@ class BlockCancellationTests: XCTestCase {
         dispatch_semaphore_signal(finishSemaphore)
 
         let result = waitForTaskToComplete(task)
-        XCTAssertEqual(try! result.dematerialize(), 1)
+        XCTAssertEqual(try! result.extract(), 1)
     }
 
     func testThatCancellingBeforeATaskStartsProducesTheCancellationError() {
@@ -61,7 +61,7 @@ class BlockCancellationTests: XCTestCase {
             dispatch_semaphore_wait(semaphore, oneSecondTimeout)
         }
 
-        let task = Task(upon: queue, onCancel: .Unit) { () -> Result<Int, AnyError> in
+        let task = Task(upon: queue, onCancel: AnyError.Unit) { () -> Result<Int> in
             .Success(1)
         }
 
@@ -69,7 +69,7 @@ class BlockCancellationTests: XCTestCase {
         dispatch_semaphore_signal(semaphore)
 
         let result = waitForTaskToComplete(task)
-        XCTAssertEqual(result.error, .Unit)
+        XCTAssertEqual(result.error as? AnyError, AnyError.Unit)
     }
 
 }
