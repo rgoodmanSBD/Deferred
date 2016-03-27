@@ -16,8 +16,7 @@ public typealias Cancellation = () -> Void
 
 private func noCancellation() { }
 
-public struct Task<T, Error: ErrorType>: FutureType {
-    public typealias Value = Result<T, Error>
+public struct Task<T, Error: ErrorType> {
 
     private let task: Future<Value>
     private let cancellation: Cancellation
@@ -27,21 +26,25 @@ public struct Task<T, Error: ErrorType>: FutureType {
         self.cancellation = cancellation
     }
 
-    public init<Future: FutureType where Future.Value == Value>(_ future: Future, cancellation: Cancellation = noCancellation) {
-        self.init(task: Future(future), cancellation: cancellation)
+}
+
+extension Task {
+
+    /// Attempt to cancel the underlying task. This is a "best effort"; there are several
+    /// situations in which cancellation will not happen:
+    ///
+    /// * The task has already completed (racing with isFilled).
+    /// * The underlying task has entered an uncancelable state.
+    /// * The underlying task is not cancelable.
+    public func cancel() {
+        cancellation()
     }
 
-    public init(value: Result<T, Error>, cancellation: Cancellation = noCancellation) {
-        self.init(task: Future(value: value), cancellation: cancellation)
-    }
+}
 
-    public init(_ other: Future<Value>, cancellation: Cancellation = noCancellation) {
-        self.init(task: other, cancellation: cancellation)
-    }
+extension Task: FutureType {
 
-    public init(_ other: Task<T, Error>, cancellation: Cancellation = noCancellation) {
-        self.init(task: other.task, cancellation: cancellation)
-    }
+    public typealias Value = Result<T, Error>
 
     /// Call some function once the value is determined.
     ///
@@ -65,13 +68,31 @@ public struct Task<T, Error: ErrorType>: FutureType {
         return task.wait(time)
     }
 
-    /// Attempt to cancel the underlying task. This is a "best effort"; there are several
-    /// situations in which cancellation will not happen:
-    ///
-    /// * The task has already completed (racing with isFilled).
-    /// * The underlying task has entered an uncancelable state.
-    /// * The underlying task is not cancelable.
-    public func cancel() {
-        cancellation()
+}
+
+extension Task {
+
+    public init<OtherFuture: FutureType where OtherFuture.Value == Value>(_ future: OtherFuture, cancellation: Cancellation = noCancellation) {
+        self.init(task: Future(future), cancellation: cancellation)
     }
+
+    public init(value: Value, cancellation: Cancellation = noCancellation) {
+        self.init(task: Future(value: value), cancellation: cancellation)
+    }
+
+    public init(_ other: Future<Value>, cancellation: Cancellation = noCancellation) {
+        self.init(task: other, cancellation: cancellation)
+    }
+
+    public init(_ other: Task<T, Error>, cancellation: Cancellation = noCancellation) {
+        self.init(task: other.task, cancellation: cancellation)
+    }
+
+    init<Future: FutureType where Future.Value: ResultType, Future.Value.Value == T, Future.Value.Error == Error>(_ other: Future, cancellation: Cancellation = noCancellation) {
+        let mapped = other.map {
+            $0.analysis(ifSuccess: Result.Success, ifFailure: Result.Failure)
+        }
+        self.init(mapped, cancellation: cancellation)
+    }
+
 }
