@@ -74,4 +74,39 @@ class CustomExecutorTestCase: XCTestCase {
         XCTAssert(submitCount.withReadLock({ $0 == times }), file: file, line: line)
     }
 
+    func assertExecutorCalledAtLeastOnce(inFile file: StaticString = #file, atLine line: UInt = #line) {
+        XCTAssert(submitCount.withReadLock({ $0 >= 1 }), file: file, line: line)
+    }
+    
+}
+
+class CustomQueueTestCase: XCTestCase {
+
+    private struct Constants {
+        static var key = false
+    }
+
+    private(set) var queue: dispatch_queue_t!
+    private var specificPtr: UnsafeMutablePointer<Void>!
+
+    override func setUp() {
+        super.setUp()
+
+        queue = dispatch_queue_create("Deferred test queue", nil)
+        specificPtr = malloc(0)
+        dispatch_queue_set_specific(queue, &Constants.key, specificPtr, nil)
+    }
+
+    override func tearDown() {
+        queue = nil
+        free(specificPtr)
+        specificPtr = nil
+
+        super.tearDown()
+    }
+
+    func assertOnQueue(inFile file: StaticString = #file, atLine line: UInt = #line) {
+        XCTAssertEqual(dispatch_get_specific(&Constants.key), specificPtr, file: file, line: line)
+    }
+    
 }
