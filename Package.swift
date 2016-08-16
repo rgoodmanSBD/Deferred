@@ -11,9 +11,9 @@ import PackageDescription
 let package = Package(
     name: "Deferred",
     targets: [
-        Target(name: "Deferred", dependencies: []),
-    ],
-    dependencies: [
-	    .Package(url: "https://github.com/bignerdranch/AtomicSwift.git", majorVersion: 1)
+        Target(name: "Atomics"),
+        Target(name: "Deferred", dependencies: [
+		.Target(name: "Atomics")
+        ]),
     ]
 )
